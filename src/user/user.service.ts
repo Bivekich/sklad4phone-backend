@@ -42,4 +42,30 @@ export class UserService {
       client.release();
     }
   }
+
+  async getUserByPhoneNumber(phoneNumber: string) {
+    const client = await this.pool.connect();
+    try {
+      const sanitizedPhoneNumber = phoneNumber.startsWith('+')
+        ? phoneNumber.slice(1)
+        : phoneNumber;
+
+      const getUserQuery = 'SELECT * FROM users WHERE phone_number = $1';
+      const result = await client.query(getUserQuery, [sanitizedPhoneNumber]);
+
+      if (result.rows.length === 0) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error retrieving user:', error);
+      throw new HttpException(
+        'Failed to retrieve user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    } finally {
+      client.release();
+    }
+  }
 }

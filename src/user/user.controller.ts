@@ -33,4 +33,27 @@ export class UserController {
       );
     }
   }
+
+  @Post('get')
+  async getuser(@Body('phoneNumber') phoneNumber: string) {
+    if (!phoneNumber) {
+      throw new HttpException(
+        'Phone number is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      const user = await this.userService.getUserByPhoneNumber(phoneNumber);
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+      return user;
+    } catch (error) {
+      throw new HttpException(
+        'Error retrieving user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
