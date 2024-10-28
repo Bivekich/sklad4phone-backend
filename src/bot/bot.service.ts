@@ -57,19 +57,22 @@ export class BotService implements OnModuleInit {
       : phoneNumber;
 
     try {
+      // Attempt to create the user with the provided phone number and name
       await this.userService.createUser(sanitizedPhoneNumber, firstName);
+
+      // Notify the user that their number is saved and provide a link to the mini-app
       await this.bot.sendMessage(
         chatId,
-        'Ваш номер успешно сохранен. Открыть мини-приложение',
+        'Ваш номер успешно сохранен. Нажмите на кнопку ниже, чтобы открыть мини-приложение',
         {
           reply_markup: {
             inline_keyboard: [
               [
                 {
                   text: 'Открыть приложение',
-                  url:
-                    // this.configService.get<string>('APP_URL') ||
-                    'https://google.com',
+                  web_app: {
+                    url: this.configService.get<string>('APP_URL'),
+                  },
                 },
               ],
             ],
