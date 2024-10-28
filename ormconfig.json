@@ -1,0 +1,11 @@
+{
+  "type": "postgres",
+  "host": "81.200.148.249",
+  "port": 5432,
+  "username": "admin",
+  "password": "R9laX-DVAM",
+  "database": "sklad4phone",
+  "entities": ["dist/**/*.entity{.ts,.js}"],
+  "migrations": ["dist/migrations/*.js"],
+  "synchronize": false
+}

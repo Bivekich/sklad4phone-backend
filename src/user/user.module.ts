@@ -1,25 +1,13 @@
 import { Module } from '@nestjs/common';
-import { UserService } from './user.service';
-import { UserController } from './user.controller';
-import { Pool } from 'pg';
-
-const dbPoolProvider = {
-  provide: 'DATABASE_POOL',
-  useFactory: () => {
-    return new Pool({
-      // Add your DB config here
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASS,
-      port: Number(process.env.DB_PORT),
-    });
-  },
-};
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './user.entity'; // Adjust the path as necessary
+import { UserController } from './user.controller'; // Ensure this is imported
+import { UserService } from './user.service'; // Ensure this is imported
 
 @Module({
-  controllers: [UserController],
-  providers: [UserService, dbPoolProvider],
-  exports: [UserService],
+  imports: [TypeOrmModule.forFeature([User])], // Register User entity
+  controllers: [UserController], // Ensure the UserController is registered here
+  providers: [UserService],
+  exports: [UserService], // Export UserService if needed in other modules
 })
 export class UserModule {}

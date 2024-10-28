@@ -1,71 +1,84 @@
-import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './user.entity';
 
 @Injectable()
 export class UserService {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
-  async createUser(phoneNumber: string, firstName: string) {
-    const client = await this.pool.connect();
+  async createUser(phoneNumber: string, firstName: string): Promise<User> {
     try {
+      // Sanitize the phone number
       const sanitizedPhoneNumber = phoneNumber.startsWith('+')
         ? phoneNumber.slice(1)
         : phoneNumber;
 
       // Check if the user already exists
-      const checkUserQuery = 'SELECT * FROM users WHERE phone_number = $1';
-      const checkUserResult = await client.query(checkUserQuery, [
-        sanitizedPhoneNumber,
-      ]);
+      let user = await this.userRepository.findOne({
+        where: { phone_number: sanitizedPhoneNumber }, // Updated to match the entity field
+      });
 
-      if (checkUserResult.rows.length > 0) {
+      if (user) {
         console.log('User already registered.');
-        return checkUserResult.rows[0];
+        return user; // Return the existing user
       }
 
-      // If the user is not found, create a new one
-      const insertUserQuery =
-        'INSERT INTO users (phone_number, first_name) VALUES ($1, $2) RETURNING *';
-      const result = await client.query(insertUserQuery, [
-        sanitizedPhoneNumber,
-        firstName,
-      ]);
+      // Create a new user if not found
+      user = this.userRepository.create({
+        phone_number: sanitizedPhoneNumber, // Updated to match the entity field
+        first_name: firstName, // Updated to match the entity field
+      });
 
-      return result.rows[0]; // Return the new user
+      return await this.userRepository.save(user); // Save the new user
     } catch (error) {
       console.error('Error creating user:', error);
       throw new HttpException(
         'Failed to create user',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
-    } finally {
-      client.release();
     }
   }
 
-  async getUserByPhoneNumber(phoneNumber: string) {
-    const client = await this.pool.connect();
+  async getUserByPhoneNumber(phoneNumber: string): Promise<User> {
     try {
+      // Sanitize the phone number
+      //
+      console.log(phoneNumber);
       const sanitizedPhoneNumber = phoneNumber.startsWith('+')
         ? phoneNumber.slice(1)
         : phoneNumber;
 
-      const getUserQuery = 'SELECT * FROM users WHERE phone_number = $1';
-      const result = await client.query(getUserQuery, [sanitizedPhoneNumber]);
+      const user = await this.userRepository.findOne({
+        where: { phone_number: sanitizedPhoneNumber }, // Updated to match the entity field
+      });
 
-      if (result.rows.length === 0) {
+      if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      return result.rows[0];
+      return user;
     } catch (error) {
       console.error('Error retrieving user:', error);
       throw new HttpException(
         'Failed to retrieve user',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
-    } finally {
-      client.release();
+    }
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    try {
+      return await this.userRepository.find(); // Fetch all users
+    } catch (error) {
+      console.error('Error retrieving users:', error);
+      throw new HttpException(
+        'Failed to retrieve users',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
