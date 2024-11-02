@@ -14,7 +14,7 @@ export class User {
   @Column({ default: 0 }) // Default value for balance
   balance: number;
 
-  @Column({ default: 10 }) // Default value for balance
+  @Column({ type: 'decimal', precision: 2, scale: 1, default: 1.0 })
   raiting: number;
 
   @Column({ default: false }) // Default value for admin

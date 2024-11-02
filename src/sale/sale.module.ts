@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Sale } from './sale.entity'; // Adjust the path as necessary
-import { SaleController } from './sale.controller'; // Ensure this is imported
-import { SaleService } from './sale.service'; // Ensure this is imported
-
+import { Sale } from './sale.entity';
+import { UserSales } from './user-sales.entity';
+import { User } from '../user/user.entity'; // Import the User entity
+import { SaleService } from './sale.service';
+import { SaleController } from './sale.controller';
 @Module({
-  imports: [TypeOrmModule.forFeature([Sale])], // Register User entity
-  controllers: [SaleController], // Ensure the UserController is registered here
+  imports: [
+    TypeOrmModule.forFeature([Sale, UserSales, User]), // Register both entities here
+  ],
   providers: [SaleService],
-  exports: [SaleService], // Export UserService if needed in other modules
+  controllers: [SaleController],
 })
 export class SaleModule {}

@@ -81,4 +81,24 @@ export class UserService {
       );
     }
   }
+  async updateUserById(id: number, updateData: Partial<User>): Promise<User> {
+    try {
+      const user = await this.userRepository.findOne({ where: { id } });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Update user properties based on the provided data
+      Object.assign(user, updateData);
+
+      return await this.userRepository.save(user);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw new HttpException(
+        'Failed to update user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
