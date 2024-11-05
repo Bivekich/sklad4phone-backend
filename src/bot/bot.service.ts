@@ -95,7 +95,7 @@ export class BotService implements OnModuleInit {
                 {
                   text: 'Открыть приложение',
                   web_app: {
-                    url: this.configService.get<string>('APP_URL'),
+                    url: `${this.configService.get<string>('APP_URL')}?phoneNummber=${sanitizedPhoneNumber}`,
                   },
                 },
               ],
