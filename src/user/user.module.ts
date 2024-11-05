@@ -8,6 +8,6 @@ import { UserService } from './user.service'; // Ensure this is imported
   imports: [TypeOrmModule.forFeature([User])], // Register User entity
   controllers: [UserController], // Ensure the UserController is registered here
   providers: [UserService],
-  exports: [UserService], // Export UserService if needed in other modules
+  exports: [UserService, TypeOrmModule], // Export UserService if needed in other modules
 })
 export class UserModule {}

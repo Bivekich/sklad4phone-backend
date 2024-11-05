@@ -26,6 +26,7 @@ export class BotService implements OnModuleInit {
 
   onModuleInit() {
     this.bot.onText(/\/start/, this.handleStartCommand.bind(this));
+    this.bot.onText(/\/test/, this.handleTestCommand.bind(this));
     this.bot.on('contact', this.handleContact.bind(this));
     this.bot.on('polling_error', (err) => console.error('Polling error:', err));
   }
@@ -45,6 +46,25 @@ export class BotService implements OnModuleInit {
       },
     );
   }
+  private async handleTestCommand(msg: Message) {
+    const chatId = msg.chat.id;
+
+    // Example contact details
+    const contact = {
+      firstName: 'Владимир', // Replace with the actual first name
+      lastName: '', // Optional
+      phoneNumber: '79016074757', // Replace with the actual phone number
+    };
+
+    await this.bot.sendContact(chatId, contact.phoneNumber, contact.firstName, {
+      last_name: contact.lastName, // Optional
+    });
+
+    await this.bot.sendMessage(
+      chatId,
+      'Добро пожаловать! Пользователь с вопросом: .... .',
+    );
+  }
 
   private async handleContact(msg: Message) {
     const chatId = msg.chat.id;
@@ -58,12 +78,16 @@ export class BotService implements OnModuleInit {
 
     try {
       // Attempt to create the user with the provided phone number and name
-      await this.userService.createUser(sanitizedPhoneNumber, firstName);
+      await this.userService.createUser(
+        sanitizedPhoneNumber,
+        chatId,
+        firstName,
+      );
 
       // Notify the user that their number is saved and provide a link to the mini-app
       await this.bot.sendMessage(
         chatId,
-        'Ваш номер успешно сохранен. Нажмите на кнопку ниже, чтобы открыть мини-приложение',
+        'Ваш номер успешно сохранен. Нажмите на кнопку ниже, чтобы открыть мини-приложение ',
         {
           reply_markup: {
             inline_keyboard: [
@@ -85,6 +109,14 @@ export class BotService implements OnModuleInit {
         chatId,
         'Произошла ошибка при сохранении номера.',
       );
+    }
+  }
+
+  async sendNotification(chatId: number, message: string): Promise<void> {
+    try {
+      await this.bot.sendMessage(chatId, message);
+    } catch (error) {
+      console.error('Error sending notification:', error);
     }
   }
 }

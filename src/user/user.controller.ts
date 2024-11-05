@@ -17,9 +17,10 @@ export class UserController {
   @Post()
   async createUser(
     @Body('phone_number') phoneNumber: string,
+    @Body('chatId') chatId: number,
     @Body('first_name') firstName: string,
   ): Promise<User> {
-    return this.userService.createUser(phoneNumber, firstName);
+    return this.userService.createUser(phoneNumber, chatId, firstName);
   }
 
   @Get('get')

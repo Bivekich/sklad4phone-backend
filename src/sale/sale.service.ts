@@ -26,7 +26,7 @@ export class SaleService {
   async createSale(
     name: string,
     description: string,
-    image: string, // URL/path to the uploaded image
+    images: string[], // Array of image URLs
     collected_now: number,
     collected_need: number,
     price: number,
@@ -34,7 +34,7 @@ export class SaleService {
     const sale = this.saleRepository.create({
       name,
       description,
-      image, // Store image URL in the database
+      images, // Save array of image URLs in the database
       collected_now,
       collected_need,
       price,
@@ -46,21 +46,20 @@ export class SaleService {
     try {
       const sales = await this.saleRepository.find();
 
-      // Modify the image URLs if they exist
+      // Modify the images URLs if they exist
       for (const sale of sales) {
-        if (sale.image) {
-          sale.image = `eqeqew/${sale.image}`;
-          // sale.image = `${this.configService.get<string>('SERVER_URL')}/${sale.image}`;
+        if (sale.images.length > 0) {
+          sale.images = sale.images.map(
+            (image) =>
+              `${this.configService.get<string>('SERVER_URL')}${image}`,
+          );
         }
       }
 
       return sales;
     } catch (error) {
-      // Log the error and throw a new error to be handled elsewhere
-      console.error('Ошибка при получении всех сборов:', error);
-      throw new Error(
-        'Не удалось получить сборы. Пожалуйста, попробуйте позже.',
-      );
+      console.error('Error retrieving sales:', error);
+      throw new Error('Failed to retrieve sales. Please try again later.');
     }
   }
 
@@ -69,9 +68,14 @@ export class SaleService {
     if (!sale) {
       throw new HttpException('Sale not found', HttpStatus.NOT_FOUND);
     }
-    if (sale.image) {
-      sale.image = `${this.configService.get<string>('SERVER_URL')}/${sale.image}`;
+
+    // Update each image URL
+    if (sale.images.length > 0) {
+      sale.images = sale.images.map(
+        (image) => `${this.configService.get<string>('SERVER_URL')}${image}`,
+      );
     }
+
     return sale;
   }
 
@@ -81,16 +85,14 @@ export class SaleService {
   }
 
   async deleteSale(id: number): Promise<void> {
-    // Step 1: Retrieve the sale record from UserSales to get the userId
-    const userSale = await this.userSalesRepository.findOne({
+    // Step 1: Retrieve all user sales records associated with the given sale ID
+    const userSales = await this.userSalesRepository.find({
       where: { sale_id: id },
     });
 
-    if (!userSale) {
-      throw new Error('Sale not found or already deleted.');
-    }
-
-    const phoneNumber = userSale.phoneNumber;
+    // if (userSales.length === 0) {
+    //   throw new Error('Sale not found or already deleted for all users.');
+    // }
 
     // Step 2: Retrieve the sale to get the price for refund calculation
     const sale = await this.saleRepository.findOne({ where: { id } });
@@ -99,16 +101,19 @@ export class SaleService {
       throw new Error('Sale record not found.');
     }
 
-    const refundAmount = sale.price * userSale.quantity; // Calculate total refund
+    // Step 3: Process refunds for each user
+    for (const userSale of userSales) {
+      const refundAmount = sale.price * userSale.quantity; // Calculate total refund for each user
 
-    // Step 3: Update user's balance by adding the refund amount
-    await this.userRepository.increment(
-      { phone_number: phoneNumber },
-      'balance',
-      refundAmount,
-    );
+      // Step 4: Update each user's balance by adding the refund amount
+      await this.userRepository.increment(
+        { phone_number: userSale.phoneNumber },
+        'balance',
+        refundAmount,
+      );
+    }
 
-    // Step 4: Delete the sale record from UserSales and Sale
+    // Step 5: Delete all sale records from UserSales and Sale
     await this.userSalesRepository.delete({ sale_id: id });
     await this.saleRepository.delete(id);
   }
@@ -132,6 +137,7 @@ export class SaleService {
     }
 
     // Check if phoneNumber is a string
+    //
     if (typeof phoneNumber !== 'string') {
       throw new HttpException(
         'Invalid phone number format',
@@ -184,17 +190,9 @@ export class SaleService {
   }
 
   async getUserOrders(phoneNumber: string): Promise<Sale[]> {
-    if (typeof phoneNumber !== 'string') {
-      throw new HttpException(
-        'Invalid phone number format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     const sanitizedPhoneNumber = phoneNumber.startsWith('+')
       ? phoneNumber.slice(1)
       : phoneNumber;
-    console.log('Sanitized Phone Number:', sanitizedPhoneNumber);
 
     const userSales = await this.userSalesRepository.find({
       where: { phoneNumber: sanitizedPhoneNumber },
@@ -207,10 +205,12 @@ export class SaleService {
       where: { id: In(saleIds) },
     });
 
-    // Modify the image URLs if they exist
+    // Modify each image URL in the images array
     for (const sale of sales) {
-      if (sale.image) {
-        sale.image = `${this.configService.get<string>('SERVER_URL')}/${sale.image}`;
+      if (sale.images.length > 0) {
+        sale.images = sale.images.map(
+          (image) => `${this.configService.get<string>('SERVER_URL')}${image}`,
+        );
       }
     }
 

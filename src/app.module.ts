@@ -4,6 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { BotModule } from './bot/bot.module';
 import { UserModule } from './user/user.module';
 import { SaleModule } from './sale/sale.module';
+import { SupportModule } from './support/support.module';
+import { TransactionModule } from './transaction/transaction.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { SaleModule } from './sale/sale.module';
     UserModule,
     BotModule,
     SaleModule,
+    SupportModule,
+    TransactionModule,
   ],
 })
 export class AppModule {}

@@ -12,8 +12,8 @@ export class Sale {
   @Column()
   description: string; // Corrected this to "description"
 
-  @Column()
-  image: string;
+  @Column('text', { array: true }) // Update to handle an array of images
+  images: string[];
 
   @Column()
   collected_now: number;

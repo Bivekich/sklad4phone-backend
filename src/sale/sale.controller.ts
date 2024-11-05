@@ -9,10 +9,10 @@ import {
   HttpCode,
   Query,
   UseInterceptors,
-  UploadedFile,
+  UploadedFiles,
 } from '@nestjs/common';
 import { UserSales } from './user-sales.entity';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { SaleService } from './sale.service';
 import { Sale } from './sale.entity';
@@ -25,17 +25,16 @@ export class SaleController {
 
   @Post('create')
   @UseInterceptors(
-    FileInterceptor('image', {
+    FilesInterceptor('images', 10, {
+      // Allow up to 10 images
       storage: diskStorage({
-        destination: './uploads', // Folder where images will be saved
+        destination: './uploads',
         filename: (req, file, cb) => {
-          // Use a unique filename
           const filename: string = uuidv4() + path.extname(file.originalname);
           cb(null, filename);
         },
       }),
       fileFilter: (req, file, cb) => {
-        // Accept only image files
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
           return cb(new Error('Only image files are allowed!'), false);
         }
@@ -44,18 +43,18 @@ export class SaleController {
     }),
   )
   async createSale(
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFiles() images: Express.Multer.File[],
     @Body('name') name: string,
     @Body('description') description: string,
     @Body('collected_now') collected_now: number,
     @Body('collected_need') collected_need: number,
     @Body('price') price: number,
   ): Promise<Sale> {
-    const imageUrl = `/uploads/${image.filename}`; // Relative path for saving to DB
+    const imageUrls = images.map((image) => `/uploads/${image.filename}`); // Array of image paths
     return this.saleService.createSale(
       name,
       description,
-      imageUrl,
+      imageUrls,
       collected_now,
       collected_need,
       price,

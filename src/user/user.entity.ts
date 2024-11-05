@@ -1,9 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Transaction } from '../transaction/transaction.entity'; // Adjust path as needed
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ type: 'bigint' }) // Default value for balance
+  chat_id: number;
 
   @Column()
   first_name: string;
@@ -19,4 +23,7 @@ export class User {
 
   @Column({ default: false }) // Default value for admin
   admin: boolean;
+
+  @OneToMany(() => Transaction, (transaction) => transaction.user)
+  transactions: Transaction[];
 }

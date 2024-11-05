@@ -10,7 +10,11 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async createUser(phoneNumber: string, firstName: string): Promise<User> {
+  async createUser(
+    phoneNumber: string,
+    chat_id: number,
+    firstName: string,
+  ): Promise<User> {
     try {
       // Sanitize the phone number
       const sanitizedPhoneNumber = phoneNumber.startsWith('+')
@@ -31,6 +35,7 @@ export class UserService {
       user = this.userRepository.create({
         phone_number: sanitizedPhoneNumber, // Updated to match the entity field
         first_name: firstName, // Updated to match the entity field
+        chat_id,
       });
 
       return await this.userRepository.save(user); // Save the new user
@@ -100,5 +105,11 @@ export class UserService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+  async findChatIdByPhoneNumber(phoneNumber: string): Promise<number | null> {
+    const user = await this.userRepository.findOne({
+      where: { phone_number: phoneNumber },
+    });
+    return user ? user.chat_id : null; // Assume chatId is a property on the User entity
   }
 }
