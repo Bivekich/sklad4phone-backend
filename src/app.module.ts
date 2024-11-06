@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { SaleModule } from './sale/sale.module';
 import { SupportModule } from './support/support.module';
 import { TransactionModule } from './transaction/transaction.module';
+import { BybitModule } from './bybit/bybit.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { TransactionModule } from './transaction/transaction.module';
     SaleModule,
     SupportModule,
     TransactionModule,
+    BybitModule,
   ],
 })
 export class AppModule {}

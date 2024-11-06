@@ -20,11 +20,13 @@ export class TransactionService {
   async createTransaction(
     phoneNumber: string,
     amount: number,
-    saleId: number,
+    saleId: number | null,
   ): Promise<Transaction> {
-    const sanitizedPhoneNumber = phoneNumber.startsWith('+')
-      ? phoneNumber.slice(1)
-      : phoneNumber;
+    // Ensure phoneNumber is a string
+    const sanitizedPhoneNumber = String(phoneNumber).startsWith('+')
+      ? String(phoneNumber).slice(1)
+      : String(phoneNumber); // Convert to string and sanitize
+
     // Step 1: Find the user by phone number
     const user = await this.userRepository.findOne({
       where: { phone_number: sanitizedPhoneNumber },
@@ -40,7 +42,7 @@ export class TransactionService {
     const transaction = this.transactionRepository.create({
       userId: user.id,
       amount,
-      saleId,
+      saleId: saleId ?? null,
     });
 
     // Step 3: Save and return the transaction
@@ -72,22 +74,28 @@ export class TransactionService {
       where: { id: saleId },
     });
 
-    if (!sale) {
-      throw new Error('Sale not found');
+    if (sale) {
+      // Ensure price is valid to avoid division by zero
+      if (sale.price <= 0) {
+        throw new Error('Invalid sale price');
+      }
+
+      // Calculate the quantity to add to collected_now
+      const contributionQuantity = transaction.amount / sale.price;
+
+      // Update the collected_now field in the Sale entity
+      await this.saleRepository.update(sale.id, {
+        collected_now: sale.collected_now + contributionQuantity,
+      });
+    } else {
+      const user = await this.userRepository.findOne({
+        where: { id: transaction.user.id },
+      });
+
+      await this.userRepository.update(user.id, {
+        balance: Number(user.balance) + Number(transaction.amount),
+      });
     }
-
-    // Ensure price is valid to avoid division by zero
-    if (sale.price <= 0) {
-      throw new Error('Invalid sale price');
-    }
-
-    // Calculate the quantity to add to collected_now
-    const contributionQuantity = transaction.amount / sale.price;
-
-    // Update the collected_now field in the Sale entity
-    await this.saleRepository.update(sale.id, {
-      collected_now: sale.collected_now + contributionQuantity,
-    });
 
     // Update the transaction's paid status
     await this.transactionRepository.update(id, { paid });

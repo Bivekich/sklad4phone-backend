@@ -11,12 +11,12 @@ export class TransactionController {
   async createTransaction(
     @Body('phoneNumber') phoneNumber: string,
     @Body('amount') amount: number,
-    @Body('saleId') saleId: number,
+    @Body('saleId') saleId?: number, // Use `?` to make saleId optional
   ): Promise<Transaction> {
     return await this.transactionService.createTransaction(
       phoneNumber,
       amount,
-      saleId,
+      saleId || null, // If saleId is undefined or not provided, use `null`
     );
   }
 
