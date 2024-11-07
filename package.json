@@ -30,6 +30,7 @@
     "@prisma/client": "^5.21.1",
     "bybit-api": "^3.10.23",
     "dotenv": "^16.4.5",
+    "jsonwebtoken": "^9.0.2",
     "node-telegram-bot-api": "^0.66.0",
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
