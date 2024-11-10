@@ -111,12 +111,67 @@ export class BotService implements OnModuleInit {
       );
     }
   }
-
   async sendNotification(chatId: number, message: string): Promise<void> {
     try {
+      // Send the text message
       await this.bot.sendMessage(chatId, message);
     } catch (error) {
       console.error('Error sending notification:', error);
+    }
+  }
+
+  async sendPhotoWithText(
+    chatId: number,
+    photoUrl: string,
+    caption: string,
+  ): Promise<void> {
+    try {
+      console.log('chatId:', chatId);
+      console.log('photoUrl:', photoUrl);
+      console.log('caption:', caption);
+
+      await this.bot
+        .sendPhoto(chatId, photoUrl, {
+          caption: caption,
+        })
+        .then(() => console.log('Photo sent'));
+    } catch (error) {
+      console.error('Error sending photo ');
+      // console.error('Error sending photo with text:', error);
+    }
+  }
+  async sendVideoWithText(
+    chatId: number,
+    videoUrl: string,
+    caption: string,
+  ): Promise<void> {
+    try {
+      await this.bot.sendVideo(chatId, videoUrl, { caption: caption });
+    } catch (error) {
+      console.error('Error sending video with text:', error);
+    }
+  }
+  async sendDocumentWithText(
+    chatId: number,
+    documentUrl: string,
+    caption: string,
+  ): Promise<void> {
+    try {
+      await this.bot.sendDocument(chatId, documentUrl, {
+        caption: caption,
+      });
+    } catch (error) {
+      console.error(
+        `Error sending document with text to chatId ${chatId}:`,
+        error,
+      );
+    }
+  }
+  async sendMediaGroup(chatId: number, mediaGroup: any[]): Promise<void> {
+    try {
+      await this.bot.sendMediaGroup(chatId, mediaGroup);
+    } catch (error) {
+      console.error(`Error sending media group:`, error);
     }
   }
 }

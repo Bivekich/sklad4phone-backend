@@ -27,6 +27,7 @@ export class SaleService {
     name: string,
     description: string,
     images: string[], // Array of image URLs
+    video: string | null, // Single video URL or null if no video
     collected_now: number,
     collected_need: number,
     price: number,
@@ -34,7 +35,8 @@ export class SaleService {
     const sale = this.saleRepository.create({
       name,
       description,
-      images, // Save array of image URLs in the database
+      images,
+      video,
       collected_now,
       collected_need,
       price,

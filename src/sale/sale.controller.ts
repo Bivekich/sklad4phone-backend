@@ -10,9 +10,10 @@ import {
   Query,
   UseInterceptors,
   UploadedFiles,
+  UploadedFile,
 } from '@nestjs/common';
 import { UserSales } from './user-sales.entity';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { SaleService } from './sale.service';
 import { Sale } from './sale.entity';
@@ -42,19 +43,43 @@ export class SaleController {
       },
     }),
   )
+  @UseInterceptors(
+    FileInterceptor('video', {
+      storage: diskStorage({
+        destination: './uploads/videos',
+        filename: (req, file, cb) => {
+          const filename: string = uuidv4() + path.extname(file.originalname);
+          cb(null, filename);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/\/(mp4|avi|mkv|mov)$/)) {
+          return cb(new Error('Only video files are allowed!'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
   async createSale(
     @UploadedFiles() images: Express.Multer.File[],
+    @UploadedFile() video: Express.Multer.File,
     @Body('name') name: string,
     @Body('description') description: string,
     @Body('collected_now') collected_now: number,
     @Body('collected_need') collected_need: number,
     @Body('price') price: number,
   ): Promise<Sale> {
-    const imageUrls = images.map((image) => `/uploads/${image.filename}`); // Array of image paths
+    // Create image URLs
+    const imageUrls = images.map((image) => `/uploads/${image.filename}`);
+
+    // If a video is uploaded, create its URL
+    const videoUrl = video ? `/uploads/videos/${video.filename}` : null;
+
     return this.saleService.createSale(
       name,
       description,
       imageUrls,
+      videoUrl, // Pass the video URL to the service
       collected_now,
       collected_need,
       price,
