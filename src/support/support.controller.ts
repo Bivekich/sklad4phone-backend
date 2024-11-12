@@ -9,11 +9,15 @@ export class SupportController {
 
   @Post()
   async createSupportTicket(
-    @Body('userId') userId: number,
+    @Body('phoneNumber') phoneNumber: string,
     @Body('subject') subject: string,
     @Body('message') message: string,
   ): Promise<Support> {
-    return this.supportService.createSupportTicket(userId, subject, message);
+    return this.supportService.createSupportTicket(
+      phoneNumber,
+      subject,
+      message,
+    );
   }
 
   @Get()
@@ -21,16 +25,10 @@ export class SupportController {
     return this.supportService.getSupportTickets();
   }
 
-  @Get(':id')
-  async getSupportTicketById(@Param('id') id: number): Promise<Support> {
-    return this.supportService.getSupportTicketById(id);
-  }
-
-  @Patch(':id/status')
-  async updateSupportTicketStatus(
-    @Param('id') id: number,
-    @Body('status') status: 'open' | 'in-progress' | 'closed',
-  ): Promise<Support> {
-    return this.supportService.updateSupportTicketStatus(id, status);
+  @Get(':phoneNumber')
+  async getSupportTicketById(
+    @Param('phoneNumber') phoneNumber: string,
+  ): Promise<Support[]> {
+    return this.supportService.getUserSupportTickets(phoneNumber);
   }
 }

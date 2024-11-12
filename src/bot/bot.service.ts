@@ -95,7 +95,7 @@ export class BotService implements OnModuleInit {
                 {
                   text: 'Открыть приложение',
                   web_app: {
-                    url: `${this.configService.get<string>('APP_URL')}?phoneNummber=${sanitizedPhoneNumber}`,
+                    url: `${this.configService.get<string>('APP_URL')}?phoneNumber=${sanitizedPhoneNumber}`,
                   },
                 },
               ],
@@ -172,6 +172,48 @@ export class BotService implements OnModuleInit {
       await this.bot.sendMediaGroup(chatId, mediaGroup);
     } catch (error) {
       console.error(`Error sending media group:`, error);
+    }
+  }
+  // New function to send notifications to groups based on subject
+  async sendNotificationToGroups(
+    subject: string,
+    message: string,
+    phoneNumber: string,
+    firstName: string,
+  ): Promise<void> {
+    const groupId = '-1002341394911';
+
+    try {
+      // Sending message to the group
+      await this.bot.sendMessage(
+        groupId,
+        `Вопрос к технической поддежке:\nОтдел: ${subject}\nВопрос: ${message}`,
+      );
+      console.log(`Notification sent to group ${groupId}`);
+    } catch (error) {
+      console.error(`Error sending notification to group ${groupId}:`, error);
+    }
+
+    // Formatting the contact information to send
+    const contact = {
+      firstName, // First Name
+      lastName: '', // Optional, can be left blank or passed as needed
+      phoneNumber, // Phone Number
+    };
+
+    try {
+      // Sending contact to the group
+      await this.bot.sendContact(
+        groupId,
+        contact.phoneNumber,
+        contact.firstName,
+        {
+          last_name: contact.lastName, // Optional
+        },
+      );
+      console.log(`Contact sent to group ${groupId}`);
+    } catch (error) {
+      console.error(`Error sending contact to group ${groupId}:`, error);
     }
   }
 }

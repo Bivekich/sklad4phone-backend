@@ -1,11 +1,5 @@
 // support.entity.ts
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity()
 export class Support {
@@ -13,20 +7,11 @@ export class Support {
   id: number;
 
   @Column()
-  userId: number;
+  phoneNumber: string;
 
   @Column()
   subject: string;
 
-  @Column('text')
+  @Column({ type: 'text' })
   message: string;
-
-  @Column({ default: 'open' })
-  status: 'open' | 'in-progress' | 'closed';
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }
