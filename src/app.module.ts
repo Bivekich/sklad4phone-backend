@@ -8,6 +8,7 @@ import { SupportModule } from './support/support.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { BybitModule } from './bybit/bybit.module';
 import { NotificationModule } from './notification/notification.module';
+import { AgreementModule } from './agreement/agreement.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { NotificationModule } from './notification/notification.module';
     TransactionModule,
     BybitModule,
     NotificationModule,
+    AgreementModule,
   ],
 })
 export class AppModule {}
