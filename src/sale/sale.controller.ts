@@ -26,8 +26,8 @@ export class SaleController {
 
   @Post('create')
   @UseInterceptors(
-    FilesInterceptor('images', 10, {
-      // Allow up to 10 images
+    FilesInterceptor('files', 11, {
+      // combined for all files
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, cb) => {
@@ -35,54 +35,37 @@ export class SaleController {
           cb(null, filename);
         },
       }),
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-          return cb(new Error('Only image files are allowed!'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  @UseInterceptors(
-    FileInterceptor('video', {
-      storage: diskStorage({
-        destination: './uploads/videos',
-        filename: (req, file, cb) => {
-          const filename: string = uuidv4() + path.extname(file.originalname);
-          cb(null, filename);
-        },
-      }),
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/\/(mp4|avi|mkv|mov)$/)) {
-          return cb(new Error('Only video files are allowed!'), false);
-        }
-        cb(null, true);
-      },
+      limits: { fileSize: 100 * 1024 * 1024 }, // You may need to adjust the size limit
     }),
   )
   async createSale(
-    @UploadedFiles() images: Express.Multer.File[],
-    @UploadedFile() video: Express.Multer.File,
-    @Body('name') name: string,
-    @Body('description') description: string,
-    @Body('collected_now') collected_now: number,
-    @Body('collected_need') collected_need: number,
-    @Body('price') price: number,
-  ): Promise<Sale> {
-    // Create image URLs
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body()
+    body: {
+      name: string;
+      description: string;
+      collected_now: number;
+      collected_need: number;
+      price: number;
+    },
+  ) {
+    console.log('Uploaded Files:', files);
+    const images = files.filter((file) => file.mimetype.startsWith('image/'));
+    const video = files.find((file) => file.mimetype.startsWith('video/'));
+
+    // Prepare the file URLs
     const imageUrls = images.map((image) => `/uploads/${image.filename}`);
+    const videoUrl = video ? `/uploads/${video.filename}` : null;
 
-    // If a video is uploaded, create its URL
-    const videoUrl = video ? `/uploads/videos/${video.filename}` : null;
-
+    // Proceed with the service call
     return this.saleService.createSale(
-      name,
-      description,
+      body.name,
+      body.description,
       imageUrls,
-      videoUrl, // Pass the video URL to the service
-      collected_now,
-      collected_need,
-      price,
+      videoUrl,
+      body.collected_now,
+      body.collected_need,
+      body.price,
     );
   }
 
