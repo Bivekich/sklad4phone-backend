@@ -49,14 +49,14 @@ export class SaleService {
       const sales = await this.saleRepository.find();
 
       // Modify the images URLs if they exist
-      // for (const sale of sales) {
-      //   if (sale.images.length > 0) {
-      //     sale.images = sale.images.map(
-      //       (image) =>
-      //         `${this.configService.get<string>('SERVER_URL')}${image}`,
-      //     );
-      //   }
-      // }
+      for (const sale of sales) {
+        if (sale.images.length > 0) {
+          sale.images = sale.images.map(
+            (image) =>
+              `${this.configService.get<string>('SERVER_URL')}${image}`,
+          );
+        }
+      }
 
       return sales;
     } catch (error) {
