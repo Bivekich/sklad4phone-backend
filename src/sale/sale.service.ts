@@ -164,7 +164,7 @@ export class SaleService {
     }
 
     // Check if user has enough balance
-    const totalCost = sale.price * quantity;
+    const totalCost = sale.price * quantity * 0.1;
     if (user.balance < totalCost) {
       throw new HttpException('Insufficient balance', HttpStatus.BAD_REQUEST);
     }
