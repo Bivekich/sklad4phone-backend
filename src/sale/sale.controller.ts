@@ -93,6 +93,12 @@ export class SaleController {
     return await this.saleService.deleteSale(id);
   }
 
+  @Post(':id/cancel')
+  @HttpCode(200)
+  async cancelSale(@Param('id') id: number): Promise<Sale> {
+    return await this.saleService.cancelSale(id);
+  }
+
   @Post(':id/buy')
   async buyForSale(
     @Param('id') id: number,

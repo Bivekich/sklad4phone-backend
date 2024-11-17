@@ -46,7 +46,9 @@ export class SaleService {
 
   async getAllSales(): Promise<Sale[]> {
     try {
-      const sales = await this.saleRepository.find();
+      const sales = await this.saleRepository.find({
+        where: { cancel: false },
+      });
 
       // Modify the images URLs if they exist
       for (const sale of sales) {
@@ -86,6 +88,38 @@ export class SaleService {
     return await this.getSaleById(id);
   }
 
+  async cancelSale(id: number): Promise<Sale> {
+    const userSales = await this.userSalesRepository.find({
+      where: { sale_id: id },
+    });
+
+    // if (userSales.length === 0) {
+    //   throw new Error('Sale not found or already deleted for all users.');
+    // }
+
+    // Step 2: Retrieve the sale to get the price for refund calculation
+    const sale = await this.saleRepository.findOne({ where: { id } });
+
+    if (!sale) {
+      throw new Error('Sale record not found.');
+    }
+
+    // Step 3: Process refunds for each user
+    for (const userSale of userSales) {
+      const refundAmount = sale.price * userSale.quantity * 0.1; // Calculate total refund for each user
+
+      // Step 4:  Update each user's balance by adding the refund amount
+      await this.userRepository.increment(
+        { phone_number: userSale.phoneNumber },
+        'balance',
+        refundAmount,
+      );
+    }
+
+    await this.saleRepository.update(id, { cancel: true });
+    return await this.getSaleById(id);
+  }
+
   async deleteSale(id: number): Promise<void> {
     // Step 1: Retrieve all user sales records associated with the given sale ID
     const userSales = await this.userSalesRepository.find({
@@ -105,7 +139,7 @@ export class SaleService {
 
     // Step 3: Process refunds for each user
     for (const userSale of userSales) {
-      const refundAmount = sale.price * userSale.quantity; // Calculate total refund for each user
+      const refundAmount = sale.price * userSale.quantity * 0.1; // Calculate total refund for each user
 
       // Step 4: Update each user's balance by adding the refund amount
       await this.userRepository.increment(
