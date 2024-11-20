@@ -15,6 +15,9 @@ export class User {
   @Column()
   phone_number: string;
 
+  @Column({ nullable: true })
+  username: string;
+
   @Column({ default: 0 }) // Default value for balance
   balance: number;
 

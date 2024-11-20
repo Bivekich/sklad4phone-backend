@@ -17,6 +17,8 @@ import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { SaleService } from './sale.service';
 import { Sale } from './sale.entity';
+import { UserService } from '../user/user.service'; // Import UserService
+import { User } from '../user/user.entity'; // Import User entity
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 
@@ -113,5 +115,9 @@ export class SaleController {
     @Param('phoneNumber') phoneNumber: string,
   ): Promise<Sale[]> {
     return await this.saleService.getUserOrders(phoneNumber);
+  }
+  @Get('getOrderUsers/:sale_id')
+  async getOrderUsers(@Param('sale_id') sale_id: number): Promise<User[]> {
+    return await this.saleService.getOrderUsers(sale_id);
   }
 }

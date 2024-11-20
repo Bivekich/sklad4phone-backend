@@ -13,6 +13,7 @@ export class UserService {
   async createUser(
     phoneNumber: string,
     chat_id: number,
+    username: string,
     firstName: string,
   ): Promise<User> {
     try {
@@ -35,6 +36,7 @@ export class UserService {
       user = this.userRepository.create({
         phone_number: sanitizedPhoneNumber, // Updated to match the entity field
         first_name: firstName, // Updated to match the entity field
+        username,
         chat_id,
       });
 

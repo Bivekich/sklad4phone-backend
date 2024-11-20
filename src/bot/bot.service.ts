@@ -71,6 +71,8 @@ export class BotService implements OnModuleInit {
     const contact = msg.contact as Contact;
     const phoneNumber = contact.phone_number;
     const firstName = contact.first_name;
+    const username = msg.chat.username || null;
+    console.log(msg.chat);
 
     const sanitizedPhoneNumber = phoneNumber.startsWith('+')
       ? phoneNumber.slice(1)
@@ -81,6 +83,7 @@ export class BotService implements OnModuleInit {
       await this.userService.createUser(
         sanitizedPhoneNumber,
         chatId,
+        username,
         firstName,
       );
 

@@ -11,6 +11,13 @@ import { Sale } from './sale.entity';
 import { UserSales } from './user-sales.entity';
 import { User } from '../user/user.entity'; // Import the User entity
 
+interface SaleWithQuantity extends Sale {
+  quantity?: number;
+}
+interface UserWithQuantity extends User {
+  quantity?: number;
+}
+
 @Injectable()
 export class SaleService {
   constructor(
@@ -235,21 +242,82 @@ export class SaleService {
     });
 
     const saleIds = userSales.map((userSale) => userSale.sale_id);
-    if (saleIds.length === 0) return [];
 
     const sales = await this.saleRepository.find({
       where: { id: In(saleIds) },
     });
 
-    // Modify each image URL in the images array
-    for (const sale of sales) {
-      if (sale.images.length > 0) {
-        sale.images = sale.images.map(
+    // // Modify each image URL in the images array and set quantity
+    // for (const sale of sales) {
+    //   if (sale.images.length > 0) {
+    //     sale.images = sale.images.map(
+    //       (image) => `${this.configService.get<string>('SERVER_URL')}${image}`,
+    //     );
+    //   }
+
+    //   // Find the corresponding userSale to get the quantity
+    //   const userSale = userSales.find((us) => us.sale_id === sale.id);
+    //   sale.quantity = userSale ? userSale.quantity : 0; // Default to 0 if not found
+    // }
+
+    const processedSales: SaleWithQuantity[] = sales.map((sale) => {
+      const saleWithQuantity: SaleWithQuantity = { ...sale };
+
+      if (saleWithQuantity.images.length > 0) {
+        saleWithQuantity.images = saleWithQuantity.images.map(
           (image) => `${this.configService.get<string>('SERVER_URL')}${image}`,
         );
       }
+
+      const userSale = userSales.find(
+        (us) => us.sale_id === saleWithQuantity.id,
+      );
+      saleWithQuantity.quantity = userSale ? userSale.quantity : 0;
+
+      return saleWithQuantity;
+    });
+
+    return processedSales;
+  }
+  async getOrderUsers(sale_id: number): Promise<User[]> {
+    // Fetch the sale to ensure it exists
+    const sale = await this.saleRepository.findOne({
+      where: { id: sale_id },
+    });
+
+    if (!sale) {
+      throw new Error('Sale not found');
     }
 
-    return sales;
+    // Fetch user_sale entries for the given sale_id
+    const userSales = await this.userSalesRepository.find({
+      where: { sale_id: sale_id },
+    });
+
+    if (userSales.length === 0) {
+      return [];
+    }
+
+    // Extract user_ids from user_sales
+    const userPhoneNumber = userSales.map((userSale) => userSale.phoneNumber);
+
+    // Fetch users whose ids match the user_ids from user_sales
+    const users = await this.userRepository.find({
+      where: { phone_number: In(userPhoneNumber) },
+    });
+
+    const processedUsers: UserWithQuantity[] = users.map((user) => {
+      const userWithQuantity: UserWithQuantity = { ...user };
+
+      const userSale = userSales.find(
+        (us) => us.phoneNumber === userWithQuantity.phone_number,
+      );
+
+      userWithQuantity.quantity = userSale ? userSale.quantity : 0;
+
+      return userWithQuantity;
+    });
+
+    return processedUsers;
   }
 }
