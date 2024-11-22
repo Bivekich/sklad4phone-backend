@@ -65,6 +65,9 @@ export class SaleService {
               `${this.configService.get<string>('SERVER_URL')}${image}`,
           );
         }
+        if (sale.video) {
+          sale.video = `${this.configService.get<string>('SERVER_URL')}${sale.video}`;
+        }
       }
 
       return sales;
@@ -85,6 +88,9 @@ export class SaleService {
       sale.images = sale.images.map(
         (image) => `${this.configService.get<string>('SERVER_URL')}${image}`,
       );
+      if (sale.video) {
+        sale.video = `${this.configService.get<string>('SERVER_URL')}${sale.video}`;
+      }
     }
 
     return sale;
