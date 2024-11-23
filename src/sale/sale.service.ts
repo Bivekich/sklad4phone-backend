@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { Sale } from './sale.entity';
 import { UserSales } from './user-sales.entity';
 import { User } from '../user/user.entity'; // Import the User entity
+import { LogService } from '../log/log.service'; // Import the LogService
 
 interface SaleWithQuantity extends Sale {
   quantity?: number;
@@ -28,6 +29,8 @@ export class SaleService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private configService: ConfigService,
+    private logService: LogService,
+    // private logService: LogService,
   ) {}
 
   async createSale(
@@ -54,7 +57,7 @@ export class SaleService {
   async getAllSales(): Promise<Sale[]> {
     try {
       const sales = await this.saleRepository.find({
-        where: { cancel: false },
+        where: { cancel: false, deleted: false },
       });
 
       // Modify the images URLs if they exist
@@ -96,6 +99,41 @@ export class SaleService {
     return sale;
   }
 
+  async getSaleInHistoryById(id: number): Promise<SaleWithQuantity> {
+    // Fetch the sale by ID
+    const sale = await this.saleRepository.findOneBy({ id });
+
+    // Check if the sale exists
+    if (!sale) {
+      throw new HttpException('Sale not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Process the sale data
+    const processedSale: SaleWithQuantity = {
+      ...sale,
+      images: sale.images.map(
+        (image) => `${this.configService.get<string>('SERVER_URL')}${image}`,
+      ),
+      video: sale.video
+        ? `${this.configService.get<string>('SERVER_URL')}${sale.video}`
+        : null,
+      quantity: 0, // Default quantity
+    };
+
+    // Fetch the user sale associated with the sale
+    const userSale = await this.userSalesRepository.findOne({
+      where: { sale_id: processedSale.id },
+    });
+
+    // If userSale is found, update the quantity
+    if (userSale) {
+      processedSale.quantity = userSale.quantity;
+    }
+
+    console.log(processedSale);
+
+    return processedSale;
+  }
   async updateSale(id: number, updateData: Partial<Sale>): Promise<Sale> {
     await this.saleRepository.update(id, updateData);
     return await this.getSaleById(id);
@@ -163,8 +201,13 @@ export class SaleService {
     }
 
     // Step 5: Delete all sale records from UserSales and Sale
-    await this.userSalesRepository.delete({ sale_id: id });
-    await this.saleRepository.delete(id);
+    // await this.userSalesRepository.delete({ sale_id: id });
+    // await this.saleRepository.delete(id);
+    // Mark the sale as deleted
+    sale.deleted = true; // Assuming 'deleted' is a boolean field
+
+    // Save the updated sale back to the database
+    await this.saleRepository.save(sale);
   }
 
   async buyForSale(
@@ -234,6 +277,11 @@ export class SaleService {
       quantity,
     });
     await this.userSalesRepository.save(userSale);
+
+    await this.logService.createLog(
+      user.id,
+      `Оплатил сбор #${sale.id} в количестве ${quantity}шт`,
+    );
 
     return sale;
   }

@@ -10,6 +10,7 @@ import { BybitTransaction } from './bybit.entity';
 import * as Bybit from 'bybit-api';
 import { Sale } from '../sale/sale.entity';
 import { User } from '../user/user.entity';
+import { LogService } from '../log/log.service'; // Import the LogService
 
 @Injectable()
 export class BybitService {
@@ -22,6 +23,7 @@ export class BybitService {
     private userRepository: Repository<User>,
     @InjectRepository(BybitTransaction)
     private readonly transactionRepository: Repository<BybitTransaction>,
+    private logService: LogService,
   ) {
     this.bybitClient = new Bybit.RestClientV5({
       key: process.env.BYBIT_API_KEY,
@@ -132,6 +134,11 @@ export class BybitService {
       const user = await this.userRepository.findOne({
         where: { phone_number: phoneNumber },
       });
+
+      await this.logService.createLog(
+        user.id,
+        `Пополнил баланс через USDT(bybit) на $${Number(user.balance) + Number(transaction.amount)}`,
+      );
 
       await this.userRepository.update(user.id, {
         balance: Number(user.balance) + Number(transaction.amount),

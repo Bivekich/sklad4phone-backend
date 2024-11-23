@@ -99,6 +99,8 @@ export class UserService {
       // Update user properties based on the provided data
       Object.assign(user, updateData);
 
+      // await this.logService.createLog(user.id, ``);
+
       return await this.userRepository.save(user);
     } catch (error) {
       console.error('Error updating user:', error);

@@ -27,6 +27,9 @@ export class Sale {
   @Column({ default: false })
   cancel: boolean;
 
+  @Column({ default: false })
+  deleted: boolean;
+
   @Column({ nullable: true }) // Nullable if video is optional
   video: string; // Stores the video URL or path
 }

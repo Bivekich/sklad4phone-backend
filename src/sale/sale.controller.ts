@@ -27,19 +27,7 @@ export class SaleController {
   constructor(private readonly saleService: SaleService) {}
 
   @Post('create')
-  @UseInterceptors(
-    FilesInterceptor('files', 11, {
-      // combined for all files
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const filename: string = uuidv4() + path.extname(file.originalname);
-          cb(null, filename);
-        },
-      }),
-      limits: { fileSize: 100 * 1024 * 1024 }, // You may need to adjust the size limit
-    }),
-  )
+  @UseInterceptors(FilesInterceptor('files')) // Ensure you specify the field name used in the form
   async createSale(
     @UploadedFiles() files: Express.Multer.File[],
     @Body()
@@ -52,6 +40,15 @@ export class SaleController {
     },
   ) {
     console.log('Uploaded Files:', files);
+
+    // Check if files is defined
+    if (!files) {
+      console.error('No files uploaded');
+      // Handle the case where no files are uploaded
+      // throw new Error('No files uploaded');
+      return;
+    }
+
     const images = files.filter((file) => file.mimetype.startsWith('image/'));
     const video = files.find((file) => file.mimetype.startsWith('video/'));
 
@@ -79,6 +76,11 @@ export class SaleController {
   @Get(':id')
   async getSaleById(@Param('id') id: number): Promise<Sale> {
     return await this.saleService.getSaleById(id);
+  }
+
+  @Get(':id/history')
+  async getSaleInHistoryById(@Param('id') id: number): Promise<Sale> {
+    return await this.saleService.getSaleInHistoryById(id);
   }
 
   @Put(':id')

@@ -9,6 +9,7 @@ import { TransactionModule } from './transaction/transaction.module';
 import { BybitModule } from './bybit/bybit.module';
 import { NotificationModule } from './notification/notification.module';
 import { AgreementModule } from './agreement/agreement.module';
+import { LogModule } from './log/log.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AgreementModule } from './agreement/agreement.module';
     BybitModule,
     NotificationModule,
     AgreementModule,
+    LogModule,
   ],
 })
 export class AppModule {}
