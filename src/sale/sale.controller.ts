@@ -27,7 +27,19 @@ export class SaleController {
   constructor(private readonly saleService: SaleService) {}
 
   @Post('create')
-  @UseInterceptors(FilesInterceptor('files')) // Ensure you specify the field name used in the form
+  @UseInterceptors(
+    FilesInterceptor('files', 11, {
+      // combined for all files
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const filename: string = uuidv4() + path.extname(file.originalname);
+          cb(null, filename);
+        },
+      }),
+      limits: { fileSize: 100 * 1024 * 1024 }, // You may need to adjust the size limit
+    }),
+  )
   async createSale(
     @UploadedFiles() files: Express.Multer.File[],
     @Body()
@@ -39,16 +51,13 @@ export class SaleController {
       price: number;
     },
   ) {
-    console.log('Uploaded Files:', files);
-
-    // Check if files is defined
     if (!files) {
       console.error('No files uploaded');
       // Handle the case where no files are uploaded
       // throw new Error('No files uploaded');
       return;
     }
-
+    console.log('Uploaded Files:', files);
     const images = files.filter((file) => file.mimetype.startsWith('image/'));
     const video = files.find((file) => file.mimetype.startsWith('video/'));
 

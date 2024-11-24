@@ -14,6 +14,7 @@ import { LogService } from '../log/log.service'; // Import the LogService
 
 interface SaleWithQuantity extends Sale {
   quantity?: number;
+  createdAt?: Date;
 }
 interface UserWithQuantity extends User {
   quantity?: number;
@@ -118,16 +119,30 @@ export class SaleService {
         ? `${this.configService.get<string>('SERVER_URL')}${sale.video}`
         : null,
       quantity: 0, // Default quantity
+      createdAt: null, // Initialize createdAt
     };
 
-    // Fetch the user sale associated with the sale
-    const userSale = await this.userSalesRepository.findOne({
+    // Fetch all user sales associated with the sale
+    const userSales = await this.userSalesRepository.find({
       where: { sale_id: processedSale.id },
     });
 
-    // If userSale is found, update the quantity
-    if (userSale) {
-      processedSale.quantity = userSale.quantity;
+    // Aggregate quantities for the sale
+    const totalQuantity = userSales.reduce(
+      (acc, userSale) => acc + userSale.quantity,
+      0,
+    );
+    processedSale.quantity = totalQuantity;
+
+    // Find the user sale with the latest timestamps
+    if (userSales.length > 0) {
+      // Find the user sale with the latest updatedAt
+      const latestUserSale = userSales.reduce((latest, userSale) => {
+        return userSale.updatedAt > latest.updatedAt ? userSale : latest;
+      });
+
+      // Set the timestamps from the latest user sale
+      processedSale.createdAt = latestUserSale.createdAt; // If you also want updatedAt
     }
 
     console.log(processedSale);
@@ -286,34 +301,35 @@ export class SaleService {
     return sale;
   }
 
-  async getUserOrders(phoneNumber: string): Promise<Sale[]> {
+  async getUserOrders(phoneNumber: string): Promise<SaleWithQuantity[]> {
     const sanitizedPhoneNumber = phoneNumber.startsWith('+')
       ? phoneNumber.slice(1)
       : phoneNumber;
 
+    // Получаем все записи user_sales для данного номера телефона
     const userSales = await this.userSalesRepository.find({
       where: { phoneNumber: sanitizedPhoneNumber },
     });
 
+    // Извлекаем идентификаторы продаж из user_sales
     const saleIds = userSales.map((userSale) => userSale.sale_id);
 
+    // Получаем все продажи по идентификаторам
     const sales = await this.saleRepository.find({
       where: { id: In(saleIds) },
     });
 
-    // // Modify each image URL in the images array and set quantity
-    // for (const sale of sales) {
-    //   if (sale.images.length > 0) {
-    //     sale.images = sale.images.map(
-    //       (image) => `${this.configService.get<string>('SERVER_URL')}${image}`,
-    //     );
-    //   }
+    // Создаем карту для агрегирования количеств для каждой продажи
+    const quantityMap: { [key: number]: number } = {};
+    userSales.forEach((userSale) => {
+      if (quantityMap[userSale.sale_id]) {
+        quantityMap[userSale.sale_id] += userSale.quantity;
+      } else {
+        quantityMap[userSale.sale_id] = userSale.quantity;
+      }
+    });
 
-    //   // Find the corresponding userSale to get the quantity
-    //   const userSale = userSales.find((us) => us.sale_id === sale.id);
-    //   sale.quantity = userSale ? userSale.quantity : 0; // Default to 0 if not found
-    // }
-
+    // Обрабатываем продажи и добавляем количество
     const processedSales: SaleWithQuantity[] = sales.map((sale) => {
       const saleWithQuantity: SaleWithQuantity = { ...sale };
 
@@ -323,17 +339,15 @@ export class SaleService {
         );
       }
 
-      const userSale = userSales.find(
-        (us) => us.sale_id === saleWithQuantity.id,
-      );
-      saleWithQuantity.quantity = userSale ? userSale.quantity : 0;
+      // Получаем количество из quantityMap
+      saleWithQuantity.quantity = quantityMap[saleWithQuantity.id] || 0;
 
       return saleWithQuantity;
     });
 
     return processedSales;
   }
-  async getOrderUsers(sale_id: number): Promise<User[]> {
+  async getOrderUsers(sale_id: number): Promise<UserWithQuantity[]> {
     // Fetch the sale to ensure it exists
     const sale = await this.saleRepository.findOne({
       where: { id: sale_id },
@@ -352,23 +366,28 @@ export class SaleService {
       return [];
     }
 
-    // Extract user_ids from user_sales
-    const userPhoneNumber = userSales.map((userSale) => userSale.phoneNumber);
+    // Extract phone numbers from user_sales
+    const userPhoneNumbers = userSales.map((userSale) => userSale.phoneNumber);
 
-    // Fetch users whose ids match the user_ids from user_sales
+    // Fetch users whose phone numbers match the user_sales
     const users = await this.userRepository.find({
-      where: { phone_number: In(userPhoneNumber) },
+      where: { phone_number: In(userPhoneNumbers) },
     });
 
+    // Create a map to aggregate quantities for each user
+    const quantityMap: { [key: string]: number } = {};
+    userSales.forEach((userSale) => {
+      if (quantityMap[userSale.phoneNumber]) {
+        quantityMap[userSale.phoneNumber] += userSale.quantity;
+      } else {
+        quantityMap[userSale.phoneNumber] = userSale.quantity;
+      }
+    });
+
+    // Map users to UserWithQuantity
     const processedUsers: UserWithQuantity[] = users.map((user) => {
       const userWithQuantity: UserWithQuantity = { ...user };
-
-      const userSale = userSales.find(
-        (us) => us.phoneNumber === userWithQuantity.phone_number,
-      );
-
-      userWithQuantity.quantity = userSale ? userSale.quantity : 0;
-
+      userWithQuantity.quantity = quantityMap[user.phone_number] || 0;
       return userWithQuantity;
     });
 
