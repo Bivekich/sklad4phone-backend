@@ -188,14 +188,10 @@ export class SaleService {
 
   async deleteSale(id: number): Promise<void> {
     // Step 1: Retrieve all user sales records associated with the given sale ID
-    const userSales = await this.userSalesRepository.find({
-      where: { sale_id: id },
-    });
-
-    // if (userSales.length === 0) {
-    //   throw new Error('Sale not found or already deleted for all users.');
-    // }
-
+    // const userSales = await this.userSalesRepository.find({
+    //   where: { sale_id: id },
+    // });
+    //
     // Step 2: Retrieve the sale to get the price for refund calculation
     const sale = await this.saleRepository.findOne({ where: { id } });
 
@@ -204,16 +200,16 @@ export class SaleService {
     }
 
     // Step 3: Process refunds for each user
-    for (const userSale of userSales) {
-      const refundAmount = sale.price * userSale.quantity * 0.1; // Calculate total refund for each user
+    // for (const userSale of userSales) {
+    //   const refundAmount = sale.price * userSale.quantity * 0.1; // Calculate total refund for each user
 
-      // Step 4: Update each user's balance by adding the refund amount
-      await this.userRepository.increment(
-        { phone_number: userSale.phoneNumber },
-        'balance',
-        refundAmount,
-      );
-    }
+    //   // Step 4: Update each user's balance by adding the refund amount
+    //   await this.userRepository.increment(
+    //     { phone_number: userSale.phoneNumber },
+    //     'balance',
+    //     refundAmount,
+    //   );
+    // }
 
     // Step 5: Delete all sale records from UserSales and Sale
     // await this.userSalesRepository.delete({ sale_id: id });
@@ -295,7 +291,7 @@ export class SaleService {
 
     await this.logService.createLog(
       user.id,
-      `Оплатил сбор #${sale.id} в количестве ${quantity}шт`,
+      `Изменен баланс с $${user.balance + totalCost} на $${user.balance} по причине предоплаты сбора`,
     );
 
     return sale;
