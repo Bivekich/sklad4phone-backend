@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   UploadedFile,
+  NotFoundException,
 } from '@nestjs/common';
 import { UserSales } from './user-sales.entity';
 import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
@@ -21,6 +22,12 @@ import { UserService } from '../user/user.service'; // Import UserService
 import { User } from '../user/user.entity'; // Import User entity
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
+
+interface OrderBookEntry {
+  price: number;
+  amount: number;
+  volume: number;
+}
 
 @Controller('sales')
 export class SaleController {
@@ -83,13 +90,28 @@ export class SaleController {
   }
 
   @Get(':id')
-  async getSaleById(@Param('id') id: number): Promise<Sale> {
-    return await this.saleService.getSaleById(id);
+  async getSaleById(@Param('id') id: string): Promise<Sale | OrderBookEntry> {
+    const saleId = parseInt(id, 10);
+    if (isNaN(saleId) && id === 'getCource') {
+      return await this.saleService.getCource();
+    } else if (isNaN(saleId)) {
+      return;
+    }
+    return await this.saleService.getSaleById(saleId);
   }
 
   @Get(':id/history')
   async getSaleInHistoryById(@Param('id') id: number): Promise<Sale> {
     return await this.saleService.getSaleInHistoryById(id);
+  }
+
+  @Get('getCource')
+  async getCource(): Promise<OrderBookEntry | null> {
+    const orderBookEntry = await this.saleService.getCource();
+    if (!orderBookEntry) {
+      throw new NotFoundException('Не удалось получить данные курса');
+    }
+    return orderBookEntry;
   }
 
   @Put(':id')

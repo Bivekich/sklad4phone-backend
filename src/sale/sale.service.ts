@@ -11,6 +11,7 @@ import { Sale } from './sale.entity';
 import { UserSales } from './user-sales.entity';
 import { User } from '../user/user.entity'; // Import the User entity
 import { LogService } from '../log/log.service'; // Import the LogService
+import axios from 'axios';
 
 interface SaleWithQuantity extends Sale {
   quantity?: number;
@@ -18,6 +19,12 @@ interface SaleWithQuantity extends Sale {
 }
 interface UserWithQuantity extends User {
   quantity?: number;
+}
+
+interface OrderBookEntry {
+  price: number;
+  amount: number;
+  volume: number;
 }
 
 @Injectable()
@@ -388,5 +395,39 @@ export class SaleService {
     });
 
     return processedUsers;
+  }
+
+  async getCource(): Promise<OrderBookEntry | null> {
+    try {
+      const response = await axios.get(
+        'https://abcex.io/api/v1/exchange/public/market-data/order-book/depth?marketId=USDTRUB&lang=ru',
+      );
+
+      console.log('Response from API:', response.data); // Логируем данные ответа
+
+      const data = response.data; // Получаем данные из ответа
+
+      if (data && data.ask && data.ask.length > 0) {
+        const firstBid = data.ask[0];
+        const price = firstBid.price;
+        const amount = firstBid.qty;
+        const volume = (price * amount).toFixed(2);
+
+        // Создаем объект с данными
+        const orderBookEntry: OrderBookEntry = {
+          price: parseFloat(price), // Используем parseFloat, если price - это строка
+          amount: parseFloat(amount), // Используем parseFloat, если amount - это строка
+          volume: parseFloat(volume), // volume уже число, но можно оставить parseFloat для уверенности
+        };
+
+        return orderBookEntry;
+      } else {
+        console.log('Не удалось получить данные ордеров или данные пусты');
+        return null;
+      }
+    } catch (error) {
+      console.error('Произошла ошибка при получении данных:', error);
+      return null;
+    }
   }
 }
