@@ -87,15 +87,13 @@ export class BybitService {
     });
 
     if (!lastTransaction) {
-      throw new NotFoundException(
-        'No transaction found for this phone number and sale',
-      );
+      return { verified: false };
     }
 
     const currentBalance = await this.getWalletBalance();
 
     if (currentBalance !== lastTransaction.balanceAfterTransaction) {
-      throw new Error('Balance mismatch detected');
+      return { verified: false };
     }
 
     const transaction = await this.transactionRepository.findOne({
@@ -111,12 +109,12 @@ export class BybitService {
       });
 
       if (!sale) {
-        throw new Error('Sale not found');
+        return { verified: false };
       }
 
       // Ensure price is valid to avoid division by zero
       if (sale.price <= 0) {
-        throw new Error('Invalid sale price');
+        return { verified: false };
       }
 
       // Calculate the contribution quantity to add to collected_now
