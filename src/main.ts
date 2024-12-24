@@ -18,8 +18,8 @@ async function bootstrap() {
     prefix: '/uploads/', // Optional: URL prefix to access files, e.g., http://localhost:3000/uploads/<filename>
   });
 
-  app.use(bodyParser.json({ limit: '50mb' }));
-  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+  app.use(bodyParser.json({ limit: '500mb' }));
+  app.use(bodyParser.urlencoded({ limit: '500mb', extended: true }));
 
   try {
     await app.listen(3000);

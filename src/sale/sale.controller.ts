@@ -52,8 +52,8 @@ export class SaleController {
           cb(new Error('File is too large'), false);
         }
         cb(null, true);
-      }
-    }),,
+      },
+    }),
   )
   async createSale(
     @UploadedFiles() files: Express.Multer.File[],
