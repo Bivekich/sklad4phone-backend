@@ -47,6 +47,7 @@ export class SaleController {
         fileSize: 500 * 1024 * 1024, // 500MB per file
         fieldSize: 500 * 1024 * 1024, // 500MB field size
       },
+      preservePath: true,
       fileFilter: (req, file, cb) => {
         if (file.size > 500 * 1024 * 1024) {
           cb(new Error('File is too large'), false);
