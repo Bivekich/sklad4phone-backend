@@ -44,7 +44,7 @@ export class SaleController {
           cb(null, filename);
         },
       }),
-      limits: { fileSize: 100 * 1024 * 1024 }, // You may need to adjust the size limit
+      limits: { fileSize: 1000 * 1024 * 1024 }, // You may need to adjust the size limit
     }),
   )
   async createSale(
