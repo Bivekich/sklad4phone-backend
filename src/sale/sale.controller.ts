@@ -36,7 +36,6 @@ export class SaleController {
   @Post('create')
   @UseInterceptors(
     FilesInterceptor('files', 11, {
-      // combined for all files
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, cb) => {
@@ -44,8 +43,17 @@ export class SaleController {
           cb(null, filename);
         },
       }),
-      limits: { fileSize: 1000 * 1024 * 1024 }, // You may need to adjust the size limit
-    }),
+      limits: {
+        fileSize: 500 * 1024 * 1024, // 500MB per file
+        fieldSize: 500 * 1024 * 1024, // 500MB field size
+      },
+      fileFilter: (req, file, cb) => {
+        if (file.size > 500 * 1024 * 1024) {
+          cb(new Error('File is too large'), false);
+        }
+        cb(null, true);
+      }
+    }),,
   )
   async createSale(
     @UploadedFiles() files: Express.Multer.File[],
