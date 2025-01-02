@@ -107,7 +107,10 @@ export class SaleService {
     return sale;
   }
 
-  async getSaleInHistoryById(id: number): Promise<SaleWithQuantity> {
+  async getSaleInHistoryById(
+    id: number,
+    phoneNumber: string,
+  ): Promise<SaleWithQuantity> {
     // Fetch the sale by ID
     const sale = await this.saleRepository.findOneBy({ id });
 
@@ -131,12 +134,12 @@ export class SaleService {
 
     // Fetch all user sales associated with the sale
     const userSales = await this.userSalesRepository.find({
-      where: { sale_id: processedSale.id },
+      where: { phoneNumber: phoneNumber },
     });
 
     // Aggregate quantities for the sale
     const totalQuantity = userSales.reduce(
-      (acc, userSale) => acc + userSale.quantity,
+      (acc, userSale) => userSale.quantity,
       0,
     );
     processedSale.quantity = totalQuantity;

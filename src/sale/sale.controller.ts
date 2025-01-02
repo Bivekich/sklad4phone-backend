@@ -100,9 +100,18 @@ export class SaleController {
     return await this.saleService.getSaleById(saleId);
   }
 
-  @Get(':id/history')
-  async getSaleInHistoryById(@Param('id') id: number): Promise<Sale> {
-    return await this.saleService.getSaleInHistoryById(id);
+  @Get(':id/:phoneNumber/history')
+  async getSaleInHistoryById(
+    @Param('id') id: number,
+    @Param('phoneNumber') phoneNumber: string,
+  ): Promise<Sale> {
+    const sale = await this.saleService.getSaleInHistoryById(id, phoneNumber);
+    if (!sale) {
+      throw new NotFoundException(
+        `Sale with ID ${id} and phone number ${phoneNumber} not found`,
+      );
+    }
+    return sale;
   }
 
   @Get('getCource')
